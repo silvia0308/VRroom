@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using Newtonsoft.Json;
+using UnityEngine.SpatialTracking;
 
 public class DataCollector : MonoBehaviour
 {
@@ -14,39 +15,37 @@ public class DataCollector : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
     }
 
     // Update is called once per frame
     void Update()
-    {
-        
-    }
-
-    private void FixedUpdate()
     {
         if (conductColletion)
         {
             DataInfo dataInfo = new DataInfo();
             dataInfo.time = Time.time;
             Device headset = new Device();
-            headset.position = new Position(transform.GetChild(0).position);
-            headset.rotation = new Rotation(transform.GetChild(0).rotation);
+            PoseDataSource.TryGetDataFromSource(TrackedPoseDriver.TrackedPose.Center, out Pose centerEye);
+            PoseDataSource.TryGetDataFromSource(TrackedPoseDriver.TrackedPose.LeftPose, out Pose leftController);
+            PoseDataSource.TryGetDataFromSource(TrackedPoseDriver.TrackedPose.RightPose, out Pose rightController);
+            headset.position = new Position(centerEye.position);
+            headset.rotation = new Rotation(centerEye.rotation);
             dataInfo.headset = headset;
-            Device leftController = new Device();
-            leftController.position = new Position(transform.GetChild(1).position);
-            leftController.rotation = new Rotation(transform.GetChild(1).rotation);
-            dataInfo.leftController = leftController;
-            Device rightController = new Device();
-            rightController.position = new Position(transform.GetChild(2).position);
-            rightController.rotation = new Rotation(transform.GetChild(2).rotation);
-            dataInfo.rightController = rightController;
+            Device left = new Device();
+            left.position = new Position(leftController.position);
+            left.rotation = new Rotation(leftController.rotation);
+            dataInfo.leftController = left;
+            Device right = new Device();
+            right.position = new Position(rightController.position);
+            right.rotation = new Rotation(rightController.rotation);
+            dataInfo.rightController = right;
             string path = folderPath + "/" + motion + "_" + user + ".json";
             if (!File.Exists(path)) File.AppendAllText(path, "[");
             else File.AppendAllText(path, ",");
             File.AppendAllText(path, JsonConvert.SerializeObject(dataInfo));
         }
     }
+
     private void OnApplicationQuit()
     {
         string path = folderPath + "/" + motion + "_" + user + ".json";
